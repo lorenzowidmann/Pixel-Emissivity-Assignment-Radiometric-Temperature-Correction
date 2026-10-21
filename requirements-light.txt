@@ -1,0 +1,8 @@
+# LIGHT environment (no torch). Python 3.13. Pins taken from the working venv C:\venvs\sensorfusion.
+# Covers: synchronization/, sensor_fusion/, emissivity/{project_to_flir,voxel_consensus,prepare_voxel_comparison}.py,
+#         emissivity/ground_truth/, radiometric_correction/, calibration/extrinsic/ (host-side Python).
+-r synchronization/requirements.txt
+-r sensor_fusion/requirements.txt
+-r radiometric_correction/requirements.txt
+-r emissivity/ground_truth/requirements.txt
+-r calibration/extrinsic/requirements.txt

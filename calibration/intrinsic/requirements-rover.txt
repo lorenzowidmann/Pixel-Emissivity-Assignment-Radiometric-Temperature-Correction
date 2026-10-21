@@ -1,0 +1,4 @@
+# ROVER (Ubuntu): calibration/intrinsic/capture_zed_right.py (ZED 2i as a UVC webcam, no ZED SDK).
+# Versions used on the rover: TODO (rover env not available on this machine).
+numpy
+opencv-python

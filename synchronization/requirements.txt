@@ -1,0 +1,7 @@
+# synchronization/ (light env). Imports scanned with ast.
+numpy==2.5.1
+opencv-python==5.0.0.93
+pillow==12.3.0
+matplotlib==3.11.1
+rosbags==0.11.3
+flyr==5.1.0

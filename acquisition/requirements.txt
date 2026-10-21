@@ -1,0 +1,2 @@
+# acquisition/extract_fullrate_frames.py (any OS).
+opencv-python==5.0.0.93

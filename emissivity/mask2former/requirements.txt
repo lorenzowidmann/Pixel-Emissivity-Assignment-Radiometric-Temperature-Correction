@@ -1,0 +1,3 @@
+# emissivity/mask2former/ (heavy env). Mask2Former is loaded through transformers; CLIP and the
+# low-emissivity gate come from ../emissivity (same pins).
+-r ../requirements.txt

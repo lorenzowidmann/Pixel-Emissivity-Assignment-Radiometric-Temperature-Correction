@@ -1,0 +1,18 @@
+# emissivity/ classification (heavy env: classify_session.py with CLIP + SAM/SLIC).
+# Pins from C:\venvs\emissivity. torch: CPU wheel, see requirements-heavy.txt.
+# project_to_flir.py / voxel_consensus.py / prepare_voxel_comparison.py also run in the light env
+# (numpy, opencv-python, rosbags, PyYAML) -- see requirements-light.txt.
+torch==2.13.0
+# torchvision is not imported by our code, but transformers' AutoImageProcessor
+# (Mask2Former, SAM) requires it at runtime -- found by the fresh-venv test.
+torchvision==0.28.0
+transformers==5.13.0
+huggingface_hub==1.22.0
+numpy==2.5.1
+opencv-python==5.0.0.93
+pillow==12.3.0
+pandas==3.0.3
+scipy==1.18.0
+scikit-image==0.26.0
+rosbags==0.11.5
+PyYAML==6.0.3

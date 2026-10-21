@@ -1,0 +1,29 @@
+%YAML:1.0
+---
+# Intrinseci FLIR Vue Pro R 336 (lente 8mm) - calibrazione MATLAB
+# Aggiornato: 02/08/2026
+# 28 immagini, Overall Mean Reprojection Error: 0.1395 px
+# Modello: SENZA skew (scelta definitiva, coerente con la ZED).
+#   La run con skew dava err 0.1396 (delta 0.0002 px = rumore) ma spostava
+#   fx/fy del 2% (582.25 -> 570.48): skew e focale fortemente correlati,
+#   stima mal condizionata. Skew disattivato = piu' stabile, stessa accuratezza.
+#   Nota: OpenCV tratta lo skew in modo incoerente (initUndistortRectifyMap lo
+#   ignora nella proiezione in avanti, pose_from_homography_dlt lo usa via A.inv()),
+#   quindi tenerlo a zero elimina anche quella micro-incoerenza.
+# Distorsione: 2 coeff radiali (k1, k2) + 2 tangenziali (p1, p2); k3 non stimato -> 0
+# LIMITE NOTO: incertezza residua su fx/fy dell'ordine del 2% (vedi sopra).
+#   A 5 m si traduce in ~10 cm di errore di scala sulla distanza board-camera.
+#   Migliorabile solo con una nuova intrinseca con maggiore diversita' di pose.
+CameraMat: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 5.704796000000000e+02, 0.000000000000000e+00, 1.491501000000000e+02,
+           0.000000000000000e+00, 5.454275000000000e+02, 1.170047000000000e+02,
+           0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00 ]
+DistCoeff: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data: [ -4.240572000000000e-01, -1.241339000000000e-01, -5.262869000000000e-03, 2.512661000000000e-03, 0.000000000000000e+00 ]
+ImageSize: [ 336, 256 ]

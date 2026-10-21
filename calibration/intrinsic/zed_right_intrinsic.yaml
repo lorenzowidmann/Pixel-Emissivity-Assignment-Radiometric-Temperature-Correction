@@ -1,0 +1,31 @@
+%YAML:1.0
+---
+# Intrinseci ZED 2i - occhio DESTRO - calibrazione MATLAB
+# Aggiornato: 02/08/2026
+# 25 immagini, Overall Mean Reprojection Error: 0.2151 px
+# Modello: SENZA skew (modello riportato da MATLAB come definitivo).
+#   La run con skew dava err 0.2017 (-0.0134) ma con un parametro libero in
+#   piu': miglioramento non probante, skew considerato non reale (theta 89.92 deg).
+# Distorsione: 2 coeff radiali (k1, k2) + 2 tangenziali (p1, p2); k3 non stimato -> 0
+# Risoluzione: 1920x1080 (HD1080) - COERENTE con la registrazione della sessione.
+#   ATTENZIONE: il file precedente era a 1280x720 mentre si registrava in HD1080
+#   (errore di fattore 1.5 sulla matrice K). Verificare sempre che ImageSize qui
+#   coincida con la risoluzione reale dei frame pubblicati.
+# Principal point: cx +52.85 px, cy +29.72 px rispetto al centro geometrico (+2.75%).
+# FOV implicito: 68.41 deg orizzontale, 41.79 deg verticale.
+# LIMITE NOTO: i corner coprono solo il 65% dell'area del frame
+#   (bbox u [106 1733], v [136 969]) -> k1/k2 e cx/cy sono estrapolati ai bordi,
+#   non misurati. I fori piu' periferici della board sono quindi i meno affidabili.
+CameraMat: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 1.412336200000000e+03, 0.000000000000000e+00, 1.012850300000000e+03,
+           0.000000000000000e+00, 1.414471600000000e+03, 5.697181000000000e+02,
+           0.000000000000000e+00, 0.000000000000000e+00, 1.000000000000000e+00 ]
+DistCoeff: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data: [ -1.558253000000000e-01, 9.026829000000000e-03, 6.208599000000000e-04, 5.667587000000000e-04, 0.000000000000000e+00 ]
+ImageSize: [ 1920, 1080 ]

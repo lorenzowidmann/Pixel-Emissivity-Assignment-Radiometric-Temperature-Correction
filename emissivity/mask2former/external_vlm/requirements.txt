@@ -1,0 +1,11 @@
+# emissivity/mask2former/external_vlm/review_low_confidence.py
+# Runs in the heavy env (C:\venvs\emissivity) or any env with these + ../../ground_truth deps.
+# Local engine (default): Ollama server + `ollama pull moondream`.
+ollama==0.6.2
+pydantic==2.13.5
+numpy==2.5.1
+pillow==12.3.0
+# Optional cloud providers -- install only the one whose API key you set:
+#   ANTHROPIC_API_KEY -> anthropic   (not installed in the working venv: version unpinned, TODO)
+#   GEMINI_API_KEY    -> google-genai==2.22.0
+#   OPENAI_API_KEY    -> openai==3.10.0

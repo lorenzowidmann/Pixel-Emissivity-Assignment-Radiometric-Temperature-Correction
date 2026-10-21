@@ -1,0 +1,153 @@
+# =============================================================================
+# Outputs written by the scripts in this repository. Each block names the
+# producer. Session outputs normally land in the data folders (outside the
+# repo); these rules catch them if a run is pointed inside the working tree.
+# =============================================================================
+
+# acquisition/zed_record.py: default --output-dir is recordings/ next to the script
+acquisition/recordings/
+# acquisition/extract_fullrate_frames.py: <session>/fullrate/ (frames + metadata.json)
+fullrate/
+# acquisition/rtd_reading/USB9126_Pt100Reading.m: Data_DynamicCalibration/<saveName>.mat
+Data_DynamicCalibration/
+# acquisition/rtd_reading/read_plot_acquisitions.m: output/<name>.png next to the script
+acquisition/rtd_reading/output/
+
+# calibration/intrinsic/capture_zed_right.py: default --out-dir ZedCaptures/ (checkerboard images)
+ZedCaptures/
+FlirCaptures/
+# calibration/extrinsic/conversion/convert_livox_bag.py: --dst converted ROS 1 bag
+*.bag
+# calibration/extrinsic/conversion/rotate_flir_poses.py: <pose>_rot180/ (rotated JPEG + .npy)
+*_rot180/
+# calibration/extrinsic/record_check/*.py: --csv-out tables and --debug-dir PNGs
+zed_check.csv
+flir_check.csv
+lidar_pose.csv
+zed_pose.csv
+gaps.csv
+dbg_*/
+debug_*/
+# calibration/extrinsic/session_split/split_*_poses.py: --outdir Poses/pose_NN/
+Poses/
+pose_*/
+# calibration/extrinsic/session_split/patch_hole_pose.py: --outdir <pose>_patched/
+*_patched/
+# calibration/extrinsic/zed_fill/fill_board_holes.py: <pose>_filled/ (frames, holes.json, debug.png)
+*_filled/
+holes.json
+# calibration/extrinsic/board_generation/generate_board_template.py: --outdir *.pcd
+# (the two templates in lvt2calib_patches/ are tracked, see the exceptions at the end)
+*.pcd
+# calibration/extrinsic/validation/FlirLidarZedViewer_calib2.m: output/*.png next to the script
+calibration/extrinsic/validation/output/
+
+# synchronization/retime_fullrate_frames.py: fullrate/metadata.json + metadata.uniform.json
+metadata.uniform.json
+# synchronization/sync_manifest_*.py: <session-dir>/sync_manifest*.json, flir_zed_offset.json
+sync_manifest*.json
+flir_zed_offset.json
+
+# sensor_fusion/livox_odometry_loader.py: --export-ply
+*.ply
+
+# emissivity/classify_session.py: <session>/material_map/ (labels.npy, segments.json, overlay.png)
+material_map/
+material_map_*/
+# emissivity/mask2former/classify_session_m2f.py: <session>/material_map_m2f/ (covered by material_map_*/)
+# emissivity/voxel_consensus.py --stage vote: material_map_consensus/ (covered by material_map_*/)
+# emissivity/project_to_flir.py: <session>/emissivity_map/ (emissivity/distance/segment_id/sampled_mask .npy, stats.json, overlay.png)
+emissivity_map*/
+# emissivity/voxel_consensus.py --stage thermal: voxel_map*/ (thermal_voxels.csv, thermal_voxels.ply)
+voxel_map*/
+thermal_voxels.csv
+# emissivity/prepare_voxel_comparison.py: apparent_temperature_masked.npy, emissivity_correction.npy
+apparent_temperature_masked.npy
+emissivity_correction.npy
+# emissivity/ground_truth/evaluate.py: out/comparison.csv, confusion_*.csv
+emissivity/ground_truth/out/
+comparison*.csv
+confusion_*.csv
+# emissivity/ground_truth/annotate.py: default --out ground_truth.csv (named per-segmenter files are tracked)
+emissivity/ground_truth/ground_truth.csv
+# emissivity/mask2former/external_vlm/review_low_confidence.py: <run>_vlm_review.csv + <run>_vlm_review_work/
+*_vlm_review.csv
+*_vlm_review_work/
+*_work/
+
+# radiometric_correction/correct_session.py: corrected_temperature*.npy, emissivity_used.npy, correction_report.json
+corrected_temperature*.npy
+emissivity_used.npy
+correction_report.json
+# radiometric_correction/estimate_offset.py: offset_report*.json, --apply *_debiased.npy
+offset_report*.json
+*_debiased.npy
+# radiometric_correction/main.py / ThermalData.py: --out maps
+corrected.npy
+apparent.npy
+# radiometric_correction/matlab/VoxelCorrectionTable.m: voxel_correction_table.csv
+voxel_correction_table.csv
+# any overlay PNGs written next to the outputs above
+overlay*.png
+debug.png
+
+# =============================================================================
+# Raw data and model weights: never committed
+# =============================================================================
+*.db3
+*.mcap
+rosbag2_*/
+*.svo
+*.svo2
+*.mp4
+*_R.jpg
+*.rjpg
+*.npy
+*.mat
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+.cache/
+huggingface/
+
+# =============================================================================
+# Environments, secrets, tooling
+# =============================================================================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+*.key
+*api_key*
+*API_KEY*
+secrets.*
+# MATLAB
+*.asv
+*.mex*
+slprj/
+# IDE / OS / notes
+.vscode/
+.idea/
+.obsidian/
+*.swp
+.DS_Store
+Thumbs.db
+graphify-out/
+
+# =============================================================================
+# Tracked on purpose (exceptions to the rules above)
+# =============================================================================
+!emissivity/emissivity_table.csv
+!emissivity/mask2former/ade_material_prior.csv
+!emissivity/ground_truth/ground_truth_*.csv
+!emissivity/ground_truth/eval_frames.txt
+!sensor_fusion/rig_calibration.yaml
+!calibration/intrinsic/zed_right_intrinsic.yaml
+!calibration/intrinsic/thermal_intrinsic.yaml
+!calibration/extrinsic/lvt2calib_patches/**
+!calibration/extrinsic/lvt2calib_patches/data/template_pcl/*.pcd

@@ -1,0 +1,12 @@
+# calibration/extrinsic/ host-side Python (Windows). Pins from C:\venvs\extcalib / C:\venvs\sensorfusion.
+# conversion/, record_check/, session_split/, zed_fill/, board_generation/ (stdlib only).
+numpy==2.5.1
+opencv-python==5.0.0.93
+scipy==1.18.0
+rosbags==0.11.3
+flyr==5.1.0
+# Optional, only for record_check/lidar_hole_check.py. open3d 0.19.0 has no Python 3.13 wheel,
+# so use a separate Python 3.12 env (tested in C:\venvs\planefit) with:
+#   open3d==0.19.0  numpy==2.5.2  rosbags==0.11.3
+# The catkin packages in lvt2calib_patches/catkin_ws_src/ run inside the ROS 1 Noetic container
+# (rospy, cv_bridge, sensor_msgs, PyYAML from apt) -- no pip install.

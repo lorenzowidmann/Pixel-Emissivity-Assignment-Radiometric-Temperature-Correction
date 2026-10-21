@@ -1,0 +1,5 @@
+# HEAVY environment (torch + transformers: CLIP, Mask2Former, SAM). Python 3.13.
+# Pins taken from the working venv C:\venvs\emissivity. Install torch from the CPU index first:
+#   pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cpu
+-r emissivity/requirements.txt
+-r emissivity/mask2former/requirements.txt

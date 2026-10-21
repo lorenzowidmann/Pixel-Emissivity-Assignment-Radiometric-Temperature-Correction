@@ -1,0 +1,4 @@
+# ROVER (Ubuntu, onboard Intel NUC): acquisition/zed_record.py
+# pyzed is NOT on PyPI: install the ZED SDK, then run its get_python_api.py to install pyzed.
+# Version used on the rover: TODO (rover env not available on this machine).
+opencv-python
