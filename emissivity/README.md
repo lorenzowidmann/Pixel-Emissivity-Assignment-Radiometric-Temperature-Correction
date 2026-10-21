@@ -6,20 +6,36 @@ FLIR pixel grid **through the LiDAR**: there is no direct FLIR↔ZED calibration
 Each LiDAR point visible in both cameras reads its material on the ZED side and
 writes it at its own FLIR pixel, together with its distance.
 
+## Two segmentation methods, one folder each
+
+Both segment the ZED frame into regions and give each region a material with
+the same CLIP classifier and the same `emissivity_table.csv`. Only the
+segmenter, and therefore the prior, differs. Both write the same
+`material_map/v1` format, so everything downstream works with either.
+
+| Folder | Script | Segmenter | Prior on CLIP's materials | Output folder | Status |
+|---|---|---|---|---|---|
+| [`mask2former/`](mask2former) | `classify_session_m2f.py` | **Mask2Former** (ADE20K semantic classes) | category prior from the ADE class (`ade_material_prior.csv`) | `<session>/material_map_m2f/` | **Used in the paper** (§IV-A) |
+| [`sam/`](sam) | `classify_session_sam.py` | **SAM** (Segment Anything; SLIC available too) | geometric zone prior from the region's bbox shape | `<session>/material_map/` | Tested alternative, **not used** (§IV-A: SAM regions too small for CLIP) |
+
+Both apply the low-ε gate (ε < 0.5 needs confidence ≥ 0.50 and margin ≥ 0.15).
+
+## Everything else in this folder
+
 | Path | What | Env |
 |---|---|---|
-| [`mask2former/`](mask2former) | **The paper's classifier**: Mask2Former (ADE20K) + CLIP + category prior + low-ε gate | heavy |
-| [`mask2former/external_vlm/`](mask2former/external_vlm) | Optional VLM re-review of low-confidence regions | heavy (+ VLM reqs) |
-| [`ground_truth/`](ground_truth) | Hand labels and scoring (§IV-B benchmark) | light |
-| `classify_session.py` | Alternative classifier: **SAM** (default) or SLIC + CLIP + geometric zone prior. Tested and not adopted (§IV-A: SAM regions too small for CLIP). | heavy |
+| [`mask2former/external_vlm/`](mask2former/external_vlm) | Optional VLM re-review of low-confidence regions of a Mask2Former run | heavy (+ VLM reqs) |
+| [`ground_truth/`](ground_truth) | Hand labels and scoring (§IV-B benchmark): `ground_truth_m2f.csv` (Mask2Former), `ground_truth_sam.csv` (SAM) | light |
+| `emissivity/` (package) | **Shared library** used by both methods, not a third method: `table.py` (CSV loader), `classifier.py` (CLIP zero-shot, lazy torch import), `segmentation.py` (the SAM and SLIC segmenters used by `sam/`), `zones.py` (geometric prior), `sources.py` (live-camera grabbers, no current caller) | — |
+| `emissivity_table.csv` | 20 materials: `material, emissivity, emissivity_range, solar_absorptance, solar_absorptance_range, prompt, notes`. The CLIP classes are generated from it. Shared by both methods. | — |
 | `project_to_flir.py` | Material map (ZED) → FLIR pixels via LiDAR, plus per-pixel distance | light |
 | `voxel_consensus.py` | `--stage vote`: multi-view material vote per 20 cm voxel. `--stage thermal`: 3-D voxel map of a per-pixel temperature map. | light |
 | `prepare_voxel_comparison.py` | Writes the "before" and "emissivity-only" maps that `--stage thermal` voxelises for the before/after table | light |
-| `emissivity_table.csv` | 20 materials: `material, emissivity, emissivity_range, solar_absorptance, solar_absorptance_range, prompt, notes`. The CLIP classes are generated from it. | — |
-| `emissivity/` (package) | `table.py` (CSV loader), `classifier.py` (CLIP zero-shot, lazy torch import), `segmentation.py` (SLIC/SAM), `zones.py` (geometric prior), `sources.py` (live-camera grabbers, no current caller) | — |
 
 All scripts take `--session-dir` = the ZED session's **`fullrate/`** folder,
-which holds `sync_manifest.json` (from `../synchronization/`).
+which holds `sync_manifest.json` (from `../synchronization/`). With the SAM
+output, pass `--material-map-dir <session>/material_map` to the later steps;
+with the paper's Mask2Former output, pass `<session>/material_map_m2f`.
 
 ## `project_to_flir.py`
 
@@ -89,29 +105,6 @@ C:\venvs\sensorfusion\Scripts\python.exe project_to_flir.py --session-dir $S --b
 
 Use them with `voxel_consensus.py --stage thermal --corrected-name ...`, then
 `../radiometric_correction/matlab/VoxelCorrectionTable.m`.
-
-## `classify_session.py` (SAM alternative)
-
-Same `material_map/v1` output as the Mask2Former driver (`labels.npy`,
-`segments.json`, `overlay.png` with `--overlay`), written to
-`<session>/material_map`.
-
-Main flags:
-- `--segmenter {sam,slic}` (sam), `--sam-model` (`facebook/sam-vit-base`),
-  `--sam-grid` (16), `--sam-min-area` (1500), `--sam-nms-iou` (0.7);
-- `--n-segments`, `--compactness`, `--sigma` (slic);
-- `--zone-constraint` (on);
-- `--crop-to-flir-fov` (on), `--fov-margin-px` (45), `--calibration`;
-- `--clip-model` (`laion/CLIP-ViT-H-14-laion2B-s32B-b79K`), `--top-k` (3);
-- the same low-ε gate flags as `mask2former/` (0.5 / 0.50 / 0.15), `--no-gating`;
-- `--every-n`, `--limit`, `--overlay`, `--table`.
-
-`--help` still names the old default calibration path `../Calibration/rig_calibration.yaml`.
-The code looks for `sensor_fusion/rig_calibration.yaml`.
-
-```powershell
-C:\venvs\emissivity\Scripts\python.exe classify_session.py --session-dir $S --every-n 5 --limit 20 --overlay
-```
 
 ## Adding a material
 

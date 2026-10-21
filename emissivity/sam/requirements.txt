@@ -1,0 +1,3 @@
+# emissivity/sam/ (heavy env): SAM + CLIP alternative classifier.
+# Same dependencies as the shared emissivity/ package (torch, transformers, scikit-image, ...).
+-r ../requirements.txt

@@ -20,7 +20,7 @@
 6. The material's emissivity is assigned to every pixel of the region.
 
 The CLIP classifier, the table and the gate function are imported from
-`../emissivity/` (shared with `../classify_session.py`), not copied.
+`../emissivity/` (shared with the SAM alternative, `../sam/classify_session_sam.py`), not copied.
 
 ## Usage
 

@@ -76,7 +76,7 @@ flowchart TD
 | Sensing platform | §III-A | `acquisition/` |
 | Intrinsic / extrinsic calibration, time sync | §III-B, Appendix A, B | `calibration/`, `synchronization/`, `sensor_fusion/` |
 | RTD reference measurement | §III-C | `acquisition/rtd_reading/` |
-| Segmentation, classification, prior gate, low-ε gate | §IV-A | `emissivity/mask2former/` (SAM alternative: `emissivity/classify_session.py`) |
+| Segmentation, classification, prior gate, low-ε gate | §IV-A | `emissivity/mask2former/` (SAM alternative: `emissivity/sam/`) |
 | Classification benchmark (224 regions) | §IV-B | `emissivity/ground_truth/` |
 | Emissivity transfer via LiDAR, per-pixel correction | §IV-C | `emissivity/project_to_flir.py`, `radiometric_correction/correct_session.py` |
 | VLM re-review of low-confidence regions | §IV-D | `emissivity/mask2former/external_vlm/` |
@@ -102,9 +102,10 @@ calibration/
     lvt2calib_patches/       files to copy over an upstream LVT2Calib clone (+ 2 catkin packages)
 synchronization/             sync_manifest_interpolation.py, sync_manifest_neighbour.py, retime_fullrate_frames.py
 sensor_fusion/               rig_calibration.yaml (+ loader), projection.py, livox_odometry_loader.py
-emissivity/                  classify_session.py (SAM alternative), project_to_flir.py, voxel_consensus.py,
-                             prepare_voxel_comparison.py, emissivity_table.csv, emissivity/ (package)
-  mask2former/               classify_session_m2f.py, m2f_materials/, ade_material_prior.csv
+emissivity/                  project_to_flir.py, voxel_consensus.py, prepare_voxel_comparison.py,
+                             emissivity_table.csv, emissivity/ (shared CLIP/table/segmenter package)
+  mask2former/               classify_session_m2f.py, m2f_materials/, ade_material_prior.csv  <- paper's method
+  sam/                       classify_session_sam.py  <- SAM alternative, tested and not used
     external_vlm/            review_low_confidence.py
   ground_truth/              annotate.py, evaluate.py, ground_truth_*.csv, eval_frames.txt
 radiometric_correction/      correct_session.py, estimate_offset.py, main.py, ThermalData.py, radiometric/
@@ -124,7 +125,7 @@ light one runs everything that only reads bags, `.npy` maps and JSON.
 
 | Env | File | Used by |
 |---|---|---|
-| **heavy** (`C:\venvs\emissivity` in the original setup) | `requirements-heavy.txt` | `emissivity/classify_session.py`, `emissivity/mask2former/`, `external_vlm/` |
+| **heavy** (`C:\venvs\emissivity` in the original setup) | `requirements-heavy.txt` | `emissivity/mask2former/`, `emissivity/sam/`, `external_vlm/` |
 | **light** (`C:\venvs\sensorfusion`) | `requirements-light.txt` | `synchronization/`, `sensor_fusion/`, `project_to_flir.py`, `voxel_consensus.py`, `prepare_voxel_comparison.py`, `radiometric_correction/`, `ground_truth/`, `calibration/extrinsic/` |
 | **VLM** (add to heavy or light) | `emissivity/mask2former/external_vlm/requirements.txt` | `review_low_confidence.py` |
 | **rover** (Ubuntu, onboard NUC) | `acquisition/requirements-rover.txt`, `calibration/intrinsic/requirements-rover.txt` | `zed_record.py`, `capture_zed_right.py` |
@@ -391,7 +392,7 @@ their defaults above) are TODO: verify. **Classification benchmark (§IV-B)**: s
   while `correct_session.py` defaults it to `material_map`. Pass both explicitly.
 - FLIR frames must be **rotated 180°** (`rotate_flir_poses.py --npy`). The
   extrinsic was estimated on rotated images.
-- `classify_session.py --help` and `project_to_flir.py --help` still name the
+- `sam/classify_session_sam.py --help` and `project_to_flir.py --help` still name the
   old default calibration path (`../Calibration/…`). The code actually uses
   `sensor_fusion/rig_calibration.yaml`.
 

@@ -1,4 +1,4 @@
-# emissivity/ classification (heavy env: classify_session.py with CLIP + SAM/SLIC).
+# emissivity/ classification (heavy env): shared package + mask2former/ and sam/ classifiers.
 # Pins from C:\venvs\emissivity. torch: CPU wheel, see requirements-heavy.txt.
 # project_to_flir.py / voxel_consensus.py / prepare_voxel_comparison.py also run in the light env
 # (numpy, opencv-python, rosbags, PyYAML) -- see requirements-light.txt.

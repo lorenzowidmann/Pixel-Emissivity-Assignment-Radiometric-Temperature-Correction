@@ -33,6 +33,7 @@ are preserved.
 | `sensor_fusion/rig_calibration.{py,yaml}`, `projection.py` | `SensorFusionLoader/` |
 | `sensor_fusion/livox_odometry_loader.py` | `PointCloudElaboration/LivoxLidarOdometryLoader/` (needed by `project_to_flir.py --raw-lidar`) |
 | `emissivity/` (scripts, table, `emissivity/` package) | `EmissivityCalculation/` |
+| `emissivity/sam/classify_session_sam.py` | `EmissivityCalculation/classify_session.py` (moved and renamed after the first commit, so SAM and Mask2Former sit side by side) |
 | `emissivity/mask2former/` | `EmissivityCalculation/Mask2Former/` |
 | `emissivity/mask2former/external_vlm/` | `EmissivityCalculation/Mask2Former/ExtrenalVLM/` (typo fixed in the folder name) |
 | `emissivity/ground_truth/` | `EmissivityCalculation/GroundTruth/` (scripts, `eval_frames.txt`, `ground_truth_{m2f,sam}.csv`) |
@@ -46,10 +47,11 @@ packages keep their own thesis READMEs.
 
 | File | Line(s) | Change | Reason |
 |---|---|---|---|
-| `emissivity/classify_session.py` | 79, 82, 269, 272 | `"SensorFusionLoader"` → `"sensor_fusion"` (root search, error message, `sys.path`, default YAML) | folder renamed |
+| `emissivity/sam/classify_session_sam.py` (was `emissivity/classify_session.py`) | 79, 82, 269, 272 (before the move) | `"SensorFusionLoader"` → `"sensor_fusion"` (root search, error message, `sys.path`, default YAML) | folder renamed |
 | `emissivity/mask2former/classify_session_m2f.py` | 104, 107, 180 (help), 351, 355 | same | folder renamed |
 | `emissivity/project_to_flir.py` | 41, 193 | `"SensorFusionLoader"` → `"sensor_fusion"` | folder renamed |
 | `emissivity/project_to_flir.py` | 178 (help), 217–218 | `PointCloudElaboration/LivoxLidarOdometryLoader` → `sensor_fusion` | loader moved |
+| `emissivity/sam/classify_session_sam.py` | after imports; docstring usage | added `sys.path.insert(0, <emissivity/>)` so the shared `emissivity` package is found from `sam/`; usage lines renamed to `classify_session_sam.py` | moved into `sam/` |
 | `emissivity/voxel_consensus.py` | 54, 431 | `"SensorFusionLoader"` → `"sensor_fusion"` | folder renamed |
 | `emissivity/mask2former/external_vlm/review_low_confidence.py` | 165 | `"GroundTruth"` → `"ground_truth"` | folder renamed |
 | `radiometric_correction/correct_session.py` | 38 | `"EmissivityCalculation"` → `"emissivity"` | folder renamed |
@@ -71,9 +73,13 @@ No CLI flag was added, removed or renamed. No API key was found (grep for
 `sk-`, `sk-ant-`, `AIza`, and `api_key=` literals). Keys are read only from
 environment variables. Not edited on purpose:
 - the maintainer e-mail in the two `package.xml` files;
-- comments and help texts that still mention old folder names. The only
+- comments and help texts that still mention old folder names, or the SAM
+  script's old name `classify_session.py` (e.g. in `classify_session_m2f.py`,
+  `project_to_flir.py`, `voxel_consensus.py`). The SAM script also still writes
+  `"generated_by": "classify_session.py"` into `segments.json`, unchanged so
+  the output format stays identical. The only
   user-visible stale default is `--calibration` in
-  `classify_session.py`/`project_to_flir.py --help`.
+  `classify_session_sam.py`/`project_to_flir.py --help`.
 
 ## 3. Left out (and why)
 
@@ -123,7 +129,7 @@ Reported, **not fixed**.
 | ZED intrinsics | 1412.34, 1414.47, 1012.85, 569.72; k1 −0.1558, k2 0.0090, p1 0.62e−3, p2 0.57e−3 | identical in both YAMLs ✓ |
 | FLIR intrinsics | 570.48, 545.43, 149.15, 117.00; k1 −0.4241, k2 −0.1241, p1 −5.26e−3, p2 2.51e−3 | identical (but see the rounding note below) ✓ |
 | Emissivity LUT | painted metal 0.94, glass 0.92, ceramic 0.92, oxidised Al 0.25 | `emissivity_table.csv` ✓ |
-| Low-ε gate | ε < 0.5 needs conf ≥ 0.50 and margin ≥ 0.15 | defaults of `classify_session_m2f.py` / `classify_session.py` ✓ |
+| Low-ε gate | ε < 0.5 needs conf ≥ 0.50 and margin ≥ 0.15 | defaults of `classify_session_m2f.py` / `classify_session_sam.py` ✓ |
 | Voxel size | 20 cm | `voxel_consensus.py --voxel` default 0.20; consensus outputs record `voxel_m: 0.2` ✓ |
 | RH, T_refl | 50 % assumed, T_refl ≈ T_air | `correction_report.json` of all three sessions ✓ |
 | FLIR bias | 4.6 / 4.9 / 4.8 °C | `offset_report.json`: 4.644 / 4.863 / 4.804 ✓ |

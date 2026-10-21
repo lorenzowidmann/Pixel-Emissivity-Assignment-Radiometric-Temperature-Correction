@@ -40,11 +40,11 @@ regions and one survived the confidence gate at 0.79, which would have turned a
 never fired at all.
 
 Usage:
-    py classify_session.py --session-dir ...\\ZED\\20260730_161223\\fullrate --limit 3 --overlay
-    py classify_session.py --session-dir ...\\fullrate --every-n 5
+    py classify_session_sam.py --session-dir ...\\ZED\\20260730_161223\\fullrate --limit 3 --overlay
+    py classify_session_sam.py --session-dir ...\\fullrate --every-n 5
 
     # fast, lower quality (the pre-2026-08 behaviour):
-    py classify_session.py --session-dir ...\\fullrate --segmenter slic \\
+    py classify_session_sam.py --session-dir ...\\fullrate --segmenter slic \\
         --clip-model openai/clip-vit-large-patch14 \\
         --no-zone-constraint --no-crop-to-flir-fov
 """
@@ -58,6 +58,10 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+
+# The shared ../emissivity/ package (table, CLIP classifier, segmenters, zones)
+# lives one level up, next to ../mask2former/.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from emissivity import EmissivityTable, MaterialClassifier
 from emissivity.segmentation import superpixel_segments, sam_segments, segment_boxes

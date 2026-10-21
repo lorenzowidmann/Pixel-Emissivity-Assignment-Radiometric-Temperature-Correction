@@ -11,7 +11,7 @@ projection used by every script that puts a LiDAR point on an image (paper
 | `projection.py` | `project_lidar_to_camera(...)`: world → LiDAR (undo the `/Odometry` pose) → camera (`T_lidar_to_cam`) → pixels (K + distortion). `flir_fov_bbox_in_zed(...)`: the part of a ZED frame the FLIR can see, used for cropping. |
 | `livox_odometry_loader.py` | Rebuilds world clouds from raw `/livox/lidar` + `/Odometry` (per-point deskew), instead of FAST-LIO's cropped `/cloud_registered`. Imported by `../emissivity/project_to_flir.py --raw-lidar`. It also has a diagnostic CLI (`--bag`, `--inspect`, `--compare`, `--export-ply`, `--fix-digests`, ...; see `--help`). |
 
-Who imports it: `../emissivity/classify_session.py` and
+Who imports it: `../emissivity/sam/classify_session_sam.py` and
 `mask2former/classify_session_m2f.py` (FLIR-FOV crop), and
 `../emissivity/project_to_flir.py` and `voxel_consensus.py` (projection). They
 find this folder by its name, `sensor_fusion/`, so do not rename it.
