@@ -36,7 +36,7 @@ import numpy as np
 from radiometric import correct_temperature, transmittance
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "emissivity"))
-from emissivity import EmissivityTable  # noqa: E402
+from emissivity_table import EmissivityTable  # noqa: E402
 
 
 def parse_args():

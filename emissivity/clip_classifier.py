@@ -8,7 +8,7 @@ predict has a corresponding tabulated emissivity value.
 import numpy as np
 from PIL import Image
 
-from .table import EmissivityTable
+from emissivity_table import EmissivityTable
 
 MODEL_NAME = "openai/clip-vit-base-patch32"
 

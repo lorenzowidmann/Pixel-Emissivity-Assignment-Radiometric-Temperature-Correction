@@ -20,14 +20,20 @@ segmenter, and therefore the prior, differs. Both write the same
 
 Both apply the low-ε gate (ε < 0.5 needs confidence ≥ 0.50 and margin ≥ 0.15).
 
-## Everything else in this folder
+## Shared files (used by both methods) and the steps after classification
+
+The segmenter-specific code is only in `mask2former/` and `sam/`. Everything
+below is general and works with the output of either.
 
 | Path | What | Env |
 |---|---|---|
 | [`mask2former/external_vlm/`](mask2former/external_vlm) | Optional VLM re-review of low-confidence regions of a Mask2Former run | heavy (+ VLM reqs) |
 | [`ground_truth/`](ground_truth) | Hand labels and scoring (§IV-B benchmark): `ground_truth_m2f.csv` (Mask2Former), `ground_truth_sam.csv` (SAM) | light |
-| `emissivity/` (package) | **Shared library** used by both methods, not a third method: `table.py` (CSV loader), `classifier.py` (CLIP zero-shot, lazy torch import), `segmentation.py` (the SAM and SLIC segmenters used by `sam/`), `zones.py` (geometric prior), `sources.py` (live-camera grabbers, no current caller) | — |
-| `emissivity_table.csv` | 20 materials: `material, emissivity, emissivity_range, solar_absorptance, solar_absorptance_range, prompt, notes`. The CLIP classes are generated from it. Shared by both methods. | — |
+| `emissivity_table.csv` | 20 materials: `material, emissivity, emissivity_range, solar_absorptance, solar_absorptance_range, prompt, notes`. The CLIP classes are generated from it. | — |
+| `emissivity_table.py` | `EmissivityTable`: loads the CSV (pandas), lookup by material. Also used by `../radiometric_correction/correct_session.py`. | light |
+| `clip_classifier.py` | `MaterialClassifier`: CLIP zero-shot scoring of a region crop against the table prompts. torch/transformers are imported lazily. | heavy |
+| `zones.py` | Geometric zone prior (floor / ceiling / vertical): `zone_of`, `ZONE_CANDIDATES`, `restrict_ranking`. SAM uses it as its prior. Mask2Former checks its prior table against it. `voxel_consensus.py` re-applies it. No imports. | — |
+| `sources.py` | Live-camera frame grabbers (`ImageSource`, `WebcamSource`, `ZedSource`, `ZedUvcSource`). Kept from the thesis; nothing calls it. | — |
 | `project_to_flir.py` | Material map (ZED) → FLIR pixels via LiDAR, plus per-pixel distance | light |
 | `voxel_consensus.py` | `--stage vote`: multi-view material vote per 20 cm voxel. `--stage thermal`: 3-D voxel map of a per-pixel temperature map. | light |
 | `prepare_voxel_comparison.py` | Writes the "before" and "emissivity-only" maps that `--stage thermal` voxelises for the before/after table | light |

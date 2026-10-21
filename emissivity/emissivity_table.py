@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pandas as pd
 
-DEFAULT_TABLE = Path(__file__).resolve().parent.parent / "emissivity_table.csv"
+DEFAULT_TABLE = Path(__file__).resolve().parent / "emissivity_table.csv"
 
 
 @dataclass(frozen=True)

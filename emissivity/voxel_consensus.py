@@ -60,7 +60,7 @@ from project_to_flir import nearest_clouds_for_targets
 # __init__ pulls in table.py (pandas) and classifier.py (torch), neither of
 # which exists in the rosbags venv this script runs under. zones.py itself has
 # no imports at all.
-sys.path.insert(0, str(Path(__file__).resolve().parent / "emissivity"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from zones import ZONE_CANDIDATES, restrict_ranking  # noqa: E402
 
 DEFAULT_TABLE = Path(__file__).resolve().parent / "emissivity_table.csv"

@@ -1,6 +1,6 @@
 # radiometric_correction/ (light env). Imports scanned with ast.
-# correct_session.py imports emissivity.EmissivityTable, whose package __init__ needs pandas + pillow
-# (torch is imported lazily only by the classifier, so it is NOT needed here).
+# correct_session.py imports emissivity/emissivity_table.py (EmissivityTable), which needs pandas.
+# pillow is kept for ThermalData.py / flyr.
 numpy==2.5.1
 matplotlib==3.11.1
 flyr==5.1.0

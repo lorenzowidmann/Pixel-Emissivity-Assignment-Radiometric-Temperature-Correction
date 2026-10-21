@@ -85,7 +85,8 @@ _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parent))
 sys.path.insert(0, str(_HERE))
 
-from emissivity import EmissivityTable, MaterialClassifier          # noqa: E402
+from emissivity_table import EmissivityTable                        # noqa: E402
+from clip_classifier import MaterialClassifier                       # noqa: E402
 from m2f_materials import category_prior as prior_mod               # noqa: E402
 from m2f_materials import crops as crop_mod                         # noqa: E402
 from m2f_materials import segmentation_m2f as m2f                   # noqa: E402

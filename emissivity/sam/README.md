@@ -13,13 +13,18 @@ uses a different segmenter and a different prior:
 |---|---|---|
 | Segmenter | **SAM** (`facebook/sam-vit-base`, point-grid prompts) or **SLIC** superpixels (`--segmenter slic`) | **Mask2Former** (`facebook/mask2former-swin-large-ade-semantic`) |
 | What a region is | class-agnostic mask | ADE20K object class (wall, window, radiator…) |
-| Prior on CLIP's materials | **geometric zone** from the bbox shape (floor / ceiling / vertical), `../emissivity/zones.py` | **category prior** from the ADE class, `../mask2former/ade_material_prior.csv` |
-| CLIP model, material table, low-ε gate | shared (`../emissivity/`, `../emissivity_table.csv`) | shared |
+| Prior on CLIP's materials | **geometric zone** from the bbox shape (floor / ceiling / vertical), `../zones.py` | **category prior** from the ADE class, `../mask2former/ade_material_prior.csv` |
+| CLIP model, material table, low-ε gate | shared (`../clip_classifier.py`, `../emissivity_table.py` + `.csv`) | shared |
 | Output | `<session>/material_map/` | `<session>/material_map_m2f/` |
 | Ground truth | `../ground_truth/ground_truth_sam.csv` | `../ground_truth/ground_truth_m2f.csv` |
 
-The segmentation code itself is `sam_segments()` and `superpixel_segments()` in
-`../emissivity/segmentation.py`. This script imports it.
+| File | What |
+|---|---|
+| `classify_session_sam.py` | the script you run |
+| `segmentation.py` | the segmenters it calls: `sam_segments()` (SAM, point-grid prompts + NMS), `superpixel_segments()` (SLIC), `segment_boxes()` |
+
+The shared CLIP classifier, table and zone prior are imported from the main
+`emissivity/` folder (one level up).
 
 Env: heavy (`requirements.txt` includes `../requirements.txt`). The SAM weights
 (~375 MB) and CLIP ViT-H/14 (~3.9 GB) download from Hugging Face on first use.

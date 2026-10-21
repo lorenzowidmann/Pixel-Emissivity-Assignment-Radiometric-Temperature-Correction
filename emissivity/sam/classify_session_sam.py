@@ -59,13 +59,14 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-# The shared ../emissivity/ package (table, CLIP classifier, segmenters, zones)
-# lives one level up, next to ../mask2former/.
+# The shared modules (emissivity_table, clip_classifier, zones) live one level
+# up in emissivity/; segmentation.py (SAM + SLIC) sits next to this script.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from emissivity import EmissivityTable, MaterialClassifier
-from emissivity.segmentation import superpixel_segments, sam_segments, segment_boxes
-from emissivity.zones import restrict_ranking, zone_of
+from emissivity_table import EmissivityTable
+from clip_classifier import MaterialClassifier
+from segmentation import superpixel_segments, sam_segments, segment_boxes
+from zones import restrict_ranking, zone_of
 
 
 def _find_root(start: Path) -> Path:

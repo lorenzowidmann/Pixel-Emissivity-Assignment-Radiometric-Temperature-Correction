@@ -19,8 +19,9 @@
    above the threshold is used.
 6. The material's emissivity is assigned to every pixel of the region.
 
-The CLIP classifier, the table and the gate function are imported from
-`../emissivity/` (shared with the SAM alternative, `../sam/classify_session_sam.py`), not copied.
+The CLIP classifier (`../clip_classifier.py`), the table loader
+(`../emissivity_table.py`) and `../zones.py` are imported from the main
+`emissivity/` folder, shared with the SAM alternative. They are not copied.
 
 ## Usage
 
@@ -70,7 +71,7 @@ Columns:
 - `group`: echoed as `prior_group`;
 - `ade`: `;`-separated ADE labels, matched on the first comma synonym;
 - `zone`: `floor|ceiling|vertical|any`. It must be a subset of
-  `../emissivity/zones.py` for `voxel_consensus.py`;
+  `../zones.py` for `voxel_consensus.py`;
 - `materials`: `;`-separated names from `../emissivity_table.csv`;
 - `notes`.
 

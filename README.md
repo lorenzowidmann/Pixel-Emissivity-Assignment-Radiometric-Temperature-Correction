@@ -102,10 +102,11 @@ calibration/
     lvt2calib_patches/       files to copy over an upstream LVT2Calib clone (+ 2 catkin packages)
 synchronization/             sync_manifest_interpolation.py, sync_manifest_neighbour.py, retime_fullrate_frames.py
 sensor_fusion/               rig_calibration.yaml (+ loader), projection.py, livox_odometry_loader.py
-emissivity/                  project_to_flir.py, voxel_consensus.py, prepare_voxel_comparison.py,
-                             emissivity_table.csv, emissivity/ (shared CLIP/table/segmenter package)
+emissivity/                  shared by both methods: emissivity_table.csv (+ emissivity_table.py), clip_classifier.py,
+                             zones.py, sources.py; after classification: project_to_flir.py, voxel_consensus.py,
+                             prepare_voxel_comparison.py
   mask2former/               classify_session_m2f.py, m2f_materials/, ade_material_prior.csv  <- paper's method
-  sam/                       classify_session_sam.py  <- SAM alternative, tested and not used
+  sam/                       classify_session_sam.py, segmentation.py (SAM + SLIC)  <- alternative, tested and not used
     external_vlm/            review_low_confidence.py
   ground_truth/              annotate.py, evaluate.py, ground_truth_*.csv, eval_frames.txt
 radiometric_correction/      correct_session.py, estimate_offset.py, main.py, ThermalData.py, radiometric/

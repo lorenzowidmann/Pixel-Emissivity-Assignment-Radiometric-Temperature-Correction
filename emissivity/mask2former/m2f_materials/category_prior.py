@@ -90,7 +90,7 @@ class AdeMaterialPrior:
         # Imported here rather than at module scope: this file is meant to stay
         # importable without the parent package on sys.path (the driver puts it
         # there), and only the subset check needs ZONE_CANDIDATES.
-        from emissivity.zones import ZONE_CANDIDATES
+        from zones import ZONE_CANDIDATES
 
         known = set(table.materials)
         self.path = path

@@ -34,6 +34,8 @@ are preserved.
 | `sensor_fusion/livox_odometry_loader.py` | `PointCloudElaboration/LivoxLidarOdometryLoader/` (needed by `project_to_flir.py --raw-lidar`) |
 | `emissivity/` (scripts, table, `emissivity/` package) | `EmissivityCalculation/` |
 | `emissivity/sam/classify_session_sam.py` | `EmissivityCalculation/classify_session.py` (moved and renamed after the first commit, so SAM and Mask2Former sit side by side) |
+| `emissivity/sam/segmentation.py` | `EmissivityCalculation/emissivity/segmentation.py` (SAM + SLIC, used only by the SAM script) |
+| `emissivity/{emissivity_table,clip_classifier,zones,sources}.py` | `EmissivityCalculation/emissivity/{table,classifier,zones,sources}.py`. The thesis package `emissivity/` was dissolved: its general modules sit in the main `emissivity/` folder, and its `__init__.py` was dropped. |
 | `emissivity/mask2former/` | `EmissivityCalculation/Mask2Former/` |
 | `emissivity/mask2former/external_vlm/` | `EmissivityCalculation/Mask2Former/ExtrenalVLM/` (typo fixed in the folder name) |
 | `emissivity/ground_truth/` | `EmissivityCalculation/GroundTruth/` (scripts, `eval_frames.txt`, `ground_truth_{m2f,sam}.csv`) |
@@ -51,7 +53,13 @@ packages keep their own thesis READMEs.
 | `emissivity/mask2former/classify_session_m2f.py` | 104, 107, 180 (help), 351, 355 | same | folder renamed |
 | `emissivity/project_to_flir.py` | 41, 193 | `"SensorFusionLoader"` → `"sensor_fusion"` | folder renamed |
 | `emissivity/project_to_flir.py` | 178 (help), 217–218 | `PointCloudElaboration/LivoxLidarOdometryLoader` → `sensor_fusion` | loader moved |
-| `emissivity/sam/classify_session_sam.py` | after imports; docstring usage | added `sys.path.insert(0, <emissivity/>)` so the shared `emissivity` package is found from `sam/`; usage lines renamed to `classify_session_sam.py` | moved into `sam/` |
+| `emissivity/sam/classify_session_sam.py` | after imports; docstring usage | added `sys.path.insert(0, <emissivity/>)`; imports changed from the `emissivity` package to the flat modules (`emissivity_table`, `clip_classifier`, `segmentation`, `zones`); usage lines renamed | moved into `sam/`, package dissolved |
+| `emissivity/mask2former/classify_session_m2f.py` | 88 | `from emissivity import EmissivityTable, MaterialClassifier` → `from emissivity_table import …` + `from clip_classifier import …` | package dissolved |
+| `emissivity/mask2former/m2f_materials/category_prior.py` | 93 | `from emissivity.zones import` → `from zones import` | package dissolved |
+| `emissivity/clip_classifier.py` (was `emissivity/emissivity/classifier.py`) | 11 | `from .table import` → `from emissivity_table import` | package dissolved |
+| `emissivity/emissivity_table.py` (was `emissivity/emissivity/table.py`) | 22 | default CSV `parent.parent` → `parent` | one level up |
+| `emissivity/voxel_consensus.py` | 63 | `sys.path` entry `parent / "emissivity"` → `parent` (for `zones`) | package dissolved |
+| `radiometric_correction/correct_session.py` | 39 | `from emissivity import EmissivityTable` → `from emissivity_table import EmissivityTable` | package dissolved |
 | `emissivity/voxel_consensus.py` | 54, 431 | `"SensorFusionLoader"` → `"sensor_fusion"` | folder renamed |
 | `emissivity/mask2former/external_vlm/review_low_confidence.py` | 165 | `"GroundTruth"` → `"ground_truth"` | folder renamed |
 | `radiometric_correction/correct_session.py` | 38 | `"EmissivityCalculation"` → `"emissivity"` | folder renamed |
