@@ -11,6 +11,11 @@ Usage:
     py main.py --thermal apparent.npy --distance-map distance.npy
                --emissivity-map emissivity.npy --humidity 60 --air-temp 20
     py main.py --thermal 34.2 --distance 5.2 --emissivity 0.93 --humidity 60 --air-temp 20
+               --flir-image frame_R.jpg
+
+The default --radiance-model planck reads the camera's Planck constants from
+--flir-image (the original FLIR *_R.jpg of the frame being corrected);
+--radiance-model t4 uses the Stefan-Boltzmann approximation instead.
 """
 
 import argparse
@@ -18,7 +23,13 @@ import sys
 
 import numpy as np
 
-from radiometric import correct_temperature, transmittance, water_vapour_content
+from radiometric import (
+    PlanckRadianceModel,
+    StefanBoltzmannModel,
+    correct_temperature,
+    transmittance,
+    water_vapour_content,
+)
 from radiometric.io_maps import (
     DEFAULT_EMISSIVITY_TABLE,
     check_same_shape,
@@ -69,6 +80,17 @@ def parse_args():
         default=None,
         help="Path to a custom emissivity CSV (used with --material)",
     )
+    p.add_argument(
+        "--radiance-model",
+        choices=("planck", "t4"),
+        default="planck",
+        help="planck: camera Planck calibration from --flir-image; t4: Stefan-Boltzmann (default planck)",
+    )
+    p.add_argument(
+        "--flir-image",
+        default=None,
+        help="Original FLIR *_R.jpg of the frame being corrected (Planck constants; needed for planck)",
+    )
     p.add_argument("--out", help="Save the corrected map to this file (.npy/.csv)")
     p.add_argument(
         "--show", action="store_true", help="Display maps with matplotlib (map mode)"
@@ -114,6 +136,13 @@ def show_maps(apparent, tau, corrected):
 def main():
     args = parse_args()
 
+    if args.radiance_model == "planck":
+        if not args.flir_image:
+            sys.exit("--radiance-model planck needs --flir-image (original FLIR *_R.jpg)")
+        model = PlanckRadianceModel.from_flir_image(args.flir_image)
+    else:
+        model = StefanBoltzmannModel()
+
     apparent = load_scalar_or_map(args.thermal)
     distance = args.distance if args.distance is not None else load_map(args.distance_map)
 
@@ -135,7 +164,7 @@ def main():
     omega = water_vapour_content(args.humidity, args.air_temp)
     tau = transmittance(distance, args.humidity, args.air_temp)
     corrected = correct_temperature(
-        apparent, emissivity, tau, reflected_temp, args.air_temp
+        apparent, emissivity, tau, reflected_temp, args.air_temp, model=model
     )
 
     print("\nGlobal conditions")
@@ -144,6 +173,9 @@ def main():
     print(f"Air temperature:       {args.air_temp:.1f} deg C")
     print(f"Reflected temperature: {reflected_temp:.1f} deg C")
     print(f"Water vapour content:  {omega:.2f} g/m^3")
+    print(f"Radiance model:        {args.radiance_model}")
+    if args.radiance_model == "planck":
+        print(f"Planck constants:      {model.constants()}")
 
     print("\nPer-pixel results")
     print("-" * 60)

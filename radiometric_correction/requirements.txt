@@ -1,8 +1,9 @@
 # radiometric_correction/ (light env). Imports scanned with ast.
 # correct_session.py imports emissivity/emissivity_table.py (EmissivityTable), which needs pandas.
-# pillow is kept for ThermalData.py / flyr.
+# pillow is kept for ThermalData.py / flyr. pytest runs tests/ (py -m pytest tests -q).
 numpy==2.5.1
 matplotlib==3.11.1
 flyr==5.1.0
 pandas==3.0.5
 pillow==12.3.0
+pytest==9.1.1

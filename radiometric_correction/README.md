@@ -6,6 +6,7 @@ the per-session sensor bias (§IV-E). Light env (`requirements.txt`).
 ```
 S_tot = ε τ S_obj + (1−ε) τ S_refl + (1−τ) S_atm                (Eq. 1)
 S_obj = [S_tot − (1−ε) τ S_refl − (1−τ) S_atm] / (ε τ)           (Eq. 2)
+S(T)  = R1 / (R2 (e^{B/T} − F)) − O,   T = B / ln(R1 / (R2 (S + O)) + F)   (Eq. 3/4, T in K)
 T_corr = T_obj − ΔT_bias,   ΔT_bias = T_FLIR(ref. surface) − T_air   (§IV-C, Eq. 5)
 ```
 
@@ -15,11 +16,25 @@ T_corr = T_obj − ΔT_bias,   ΔT_bias = T_FLIR(ref. surface) − T_air   (§IV
   model in √d.
 - **T_refl**: approximated by T_air (`--reflected-temp` omitted).
 
-> ⚠️ **Radiance model differs from the paper.** `radiometric/radiance.py`
-> implements S(T) as the Stefan–Boltzmann **T⁴** law (in K). It does not use the
-> camera's Planck calibration S(T) = R1 / (R2 (e^{B/T} − F)) + O of Eq. 3/4,
-> and `correct_session.py` uses this default. Not changed here: reported in the
-> extraction log.
+**Radiance model.** The default (`--radiance-model planck`) is the camera's
+Planck calibration. R1, R2, B, F, O are read with `flyr` from the **original**
+`*_R.jpg` of each corrected frame (`--flir-jpg-dir`; the stripped rot180 copies
+carry no metadata). The sign of O follows flyr 5.1.0: O is **subtracted** in S(T)
+(the paper's "+O" is wrong). On the A1/A9/A10 camera the constants are the same in
+every frame: R1 = 17096.453125, R2 = 0.057946026, B = 1428, F = 1, O = −786.
+`--radiance-model t4` keeps the earlier Stefan–Boltzmann approximation.
+Planck vs T⁴ on the three sessions: session means +0.0006 / +0.0009 / +0.0013 K,
+max per-pixel |Δ| 0.03 K, sensor offsets and RTD residuals within 0.001 K, no
+material decision changed. The difference grows at low ε: +0.16 K at ε = 0.25
+(radiometric term +18.24 → +18.40 °C).
+
+> ⚠️ **FLIR-side correction in the apparent temperature.** The FLIR metadata of
+> these sessions has emissivity 0.98, object distance 50 m, reflected −27 °C,
+> atmosphere 28 °C, RH 45 %, so flyr's `.celsius` (and the rot180 `.npy`) is
+> already corrected by the camera for those settings: it is about 0.6–0.7 K above
+> the black-body apparent temperature. Not changed. A possible fix is
+> `flyr.unpack(p).adjust_metadata(emissivity=1.0, object_distance=0.0).celsius`
+> when the `.npy` are produced (this would also shift the sensor offset).
 
 | File | What |
 |---|---|
@@ -37,18 +52,24 @@ T_corr = T_obj − ΔT_bias,   ΔT_bias = T_FLIR(ref. surface) − T_air   (§IV
 - **`<session>/emissivity_map/<stem>/`**: a fixed name, no flag (`distance.npy`, `segment_id.npy`);
 - `--material-map-dir/<stem>/segments.json` (default `<session>/material_map`;
   the paper used `material_map_consensus`);
-- `--flir-dir`: rot180 `<stem>.npy` apparent temperature (°C).
+- `--flir-dir`: rot180 `<stem>.npy` apparent temperature (°C);
+- `--flir-jpg-dir DIR [DIR ...]`: folders with the original full FLIR `*_R.jpg`
+  (Planck constants). Required with `planck`; the run stops before writing if any
+  frame has no original.
 
 **Outputs**, in `emissivity_map/<stem>/`:
 - `--out-name` (default `corrected_temperature.npy`);
-- `emissivity_used.npy`;
-- `correction_report.json`: conditions, per-segment decisions, retries.
+- `--emissivity-used-name` (default `emissivity_used.npy`);
+- `--report-name` (default `correction_report.json`): conditions, radiance model
+  and its five constants, per-segment decisions, retries.
 
 | Flag | Default |
 |---|---|
 | `--humidity` | required. The paper used **50** (assumed) |
 | `--air-temp` | required (20.5 / 21.0 / 21.0 °C) |
 | `--reflected-temp` | = air temperature |
+| `--radiance-model` | `planck` (`t4` = Stefan–Boltzmann) |
+| `--flir-jpg-dir` | required with `planck` |
 | `--table` | `../emissivity/emissivity_table.csv` |
 | `--t-min` / `--t-max` | −20 / 80 °C |
 | `--min-plausible-frac` | 0.99 |
@@ -57,7 +78,7 @@ T_corr = T_obj − ΔT_bias,   ΔT_bias = T_FLIR(ref. surface) − T_air   (§IV
 | `--every-n`, `--limit` | |
 
 ```powershell
-& $L correct_session.py --session-dir $S --flir-dir $F --humidity 50 --air-temp 20.5 --material-map-dir $S\material_map_consensus
+& $L correct_session.py --session-dir $S --flir-dir $F --flir-jpg-dir $J1 $J2 --humidity 50 --air-temp 20.5 --material-map-dir $S\material_map_consensus
 ```
 
 ## `estimate_offset.py`
@@ -99,7 +120,9 @@ Paper sessions, read from their `offset_report.json`:
 ## Utilities
 
 ```powershell
-py main.py --thermal 34.2 --distance 5.2 --emissivity 0.93 --humidity 50 --air-temp 21
-py main.py --thermal apparent.npy --distance-map distance.npy --emissivity-map emissivity.npy --humidity 50 --air-temp 21 --out corrected.npy
+py main.py --thermal 34.2 --distance 5.2 --emissivity 0.93 --humidity 50 --air-temp 21 --flir-image frame_R.jpg
+py main.py --thermal apparent.npy --distance-map distance.npy --emissivity-map emissivity.npy --humidity 50 --air-temp 21 --flir-image frame_R.jpg --out corrected.npy
+py main.py --thermal 34.2 --distance 5.2 --emissivity 0.93 --humidity 50 --air-temp 21 --radiance-model t4
+py -m pytest tests -q
 py ThermalData.py --folder C:\path\to\flir_session --frame 3 --out apparent.npy --show
 ```

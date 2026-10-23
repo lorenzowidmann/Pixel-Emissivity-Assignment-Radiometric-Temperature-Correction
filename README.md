@@ -447,10 +447,14 @@ Classification benchmark (224 regions): accuracy 0.696 vs 0.522 and macro F1
 
 These are reported, not fixed (see `docs/CHANGES_FROM_THESIS.md`):
 
-- **Radiance model.** `radiometric/radiance.py` uses the Stefan–Boltzmann
-  **T⁴** form. The paper's Eq. 3/4 use the camera's Planck constants
-  (R1, R2, B, F, O) from the image metadata. `correct_session.py` uses the T⁴
-  default.
+- **Radiance model.** Resolved: `correct_session.py` and `main.py` now use the
+  camera's Planck constants (R1, R2, B, F, O) from the original FLIR JPEG by
+  default (`--radiance-model planck`). flyr subtracts O, while the paper's Eq. 3
+  writes "+O". The change against the earlier T⁴ form is ≤ 0.0013 K on the
+  session means (0.16 K at ε = 0.25).
+- **FLIR-side settings.** The FLIR JPEGs store ε = 0.98 and a 50 m object
+  distance, so the apparent temperature from flyr already includes a camera-side
+  correction (about 0.6–0.7 K). See `radiometric_correction/README.md`.
 - Smaller ones are listed in [`docs/CHANGES_FROM_THESIS.md` §5](docs/CHANGES_FROM_THESIS.md):
   the FLIR frame count of the aluminium session (paper 44, data 117), the lens
   (9 vs 8 mm), the nominal FOV, the bias method wording, FLIR distortion

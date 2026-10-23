@@ -23,6 +23,7 @@ temperature is written as NaN, never as a made-up number.
 Usage:
     py correct_session.py --session-dir ...\\ZED\\20260730_161223\\fullrate
         --flir-dir ...\\Flir\\session9_only_rot180
+        --flir-jpg-dir ...\\Flir\\<original session folder(s)>
         --humidity 50 --air-temp 20
 """
 
@@ -33,7 +34,9 @@ from pathlib import Path
 
 import numpy as np
 
-from radiometric import correct_temperature, transmittance
+from radiometric import (PlanckRadianceModel, StefanBoltzmannModel, correct_temperature,
+                         transmittance)
+from radiometric.radiance import PLANCK_KEYS
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "emissivity"))
 from emissivity_table import EmissivityTable  # noqa: E402
@@ -53,6 +56,13 @@ def parse_args():
     p.add_argument("--reflected-temp", type=float, default=None,
                     help="Reflected apparent temperature in deg C (default: air temperature)")
     p.add_argument("--table", default=None, help="Path to a custom emissivity CSV")
+    p.add_argument("--radiance-model", choices=("planck", "t4"), default="planck",
+                    help="planck: the camera's Planck calibration (R1, R2, B, F, O read from "
+                         "each frame's original FLIR JPEG, needs --flir-jpg-dir); "
+                         "t4: Stefan-Boltzmann approximation (default planck)")
+    p.add_argument("--flir-jpg-dir", nargs="+", default=None, metavar="DIR",
+                    help="Folder(s) with the ORIGINAL full FLIR *_R.jpg (with metadata). "
+                         "Not the stripped rot180 copies.")
     p.add_argument("--material-map-dir", default=None, metavar="DIR",
                     help="Where the per-frame segments.json live (default: "
                          "<session-dir>/material_map). Point this at the output of "
@@ -77,6 +87,10 @@ def parse_args():
     p.add_argument("--limit", type=int, default=None, metavar="N")
     p.add_argument("--out-name", default="corrected_temperature.npy",
                     help="Filename written inside each emissivity_map/<frame>/ folder.")
+    p.add_argument("--report-name", default="correction_report.json",
+                    help="Report filename written inside each emissivity_map/<frame>/ folder.")
+    p.add_argument("--emissivity-used-name", default="emissivity_used.npy",
+                    help="Applied-emissivity filename written inside each emissivity_map/<frame>/ folder.")
     return p.parse_args()
 
 
@@ -124,7 +138,24 @@ def main():
     if args.limit:
         triplets = triplets[:args.limit]
 
+    # Planck constants come from the original JPEG of the frame being
+    # corrected; every frame must have one, checked before anything is written.
+    flir_jpgs = {}
+    if args.radiance_model == "planck":
+        if not args.flir_jpg_dir:
+            sys.exit("--radiance-model planck needs --flir-jpg-dir (folders with the original FLIR *_R.jpg)")
+        for d in args.flir_jpg_dir:
+            for jpg in Path(d).glob("*_R.jpg"):
+                flir_jpgs.setdefault(jpg.name, jpg)
+        no_original = [Path(tr["flir"]["file"]).name for tr in triplets
+                       if Path(tr["flir"]["file"]).name not in flir_jpgs]
+        if no_original:
+            sys.exit(f"No original FLIR JPEG for {len(no_original)} frame(s) in "
+                     f"{args.flir_jpg_dir}: {', '.join(no_original)}")
+    ref_constants = None
+
     print(f"Correcting up to {len(triplets)} frame(s)")
+    print(f"Radiance model: {args.radiance_model}")
     print(f"RH {args.humidity:.0f}%, air {args.air_temp:.1f} C, reflected {reflected_temp:.1f} C")
     print(f"Plausible range [{args.t_min:.0f}, {args.t_max:.0f}] C, "
           f">= {args.min_plausible_frac * 100:.0f}% of a segment's pixels must fit\n")
@@ -157,6 +188,19 @@ def main():
 
         tau = transmittance(distance, args.humidity, args.air_temp)
 
+        source_image = None
+        if args.radiance_model == "planck":
+            source_image = flir_jpgs[Path(tr["flir"]["file"]).name]
+            model = PlanckRadianceModel.from_flir_image(source_image)
+            if ref_constants is None:
+                ref_constants = model.constants()
+                print(f"Planck constants ({source_image.name}): {ref_constants}")
+            elif model.constants() != ref_constants:
+                print(f"WARNING {stem}: Planck constants {model.constants()} differ from "
+                      f"the session's first frame {ref_constants}", file=sys.stderr)
+        else:
+            model = StefanBoltzmannModel()
+
         corrected = np.full(apparent.shape, np.nan, dtype=np.float64)
         chosen_eps = np.full(apparent.shape, np.nan, dtype=np.float64)
         decisions = []
@@ -176,7 +220,8 @@ def main():
             accepted = None
             tried = []
             for material, eps in candidates:
-                t_seg = correct_temperature(apparent[mask], eps, tau[mask], reflected_temp, args.air_temp)
+                t_seg = correct_temperature(apparent[mask], eps, tau[mask], reflected_temp,
+                                            args.air_temp, model=model)
                 frac_ok = float(np.mean((t_seg >= args.t_min) & (t_seg <= args.t_max)))
                 tried.append({"material": material, "emissivity": eps,
                               "frac_in_range": round(frac_ok, 4),
@@ -201,14 +246,17 @@ def main():
                                   "from": seg["top_material"], "to": material, "tried": tried})
 
         np.save(frame_emis / args.out_name, corrected.astype(np.float32))
-        np.save(frame_emis / "emissivity_used.npy", chosen_eps.astype(np.float32))
+        np.save(frame_emis / args.emissivity_used_name, chosen_eps.astype(np.float32))
 
         n_seg = len(np.unique(segment_id))
         valid = np.isfinite(corrected)
-        (frame_emis / "correction_report.json").write_text(json.dumps({
+        constants = model.constants() if args.radiance_model == "planck" else dict.fromkeys(PLANCK_KEYS)
+        (frame_emis / args.report_name).write_text(json.dumps({
             "schema": "radiometric_correction/v1",
             "generated_by": "correct_session.py",
             "source_flir_frame": tr["flir"]["file"],
+            "radiance_model": {"name": args.radiance_model, **constants,
+                               "source_image": str(source_image) if source_image else None},
             "conditions": {"humidity_pct": args.humidity, "air_temp_c": args.air_temp,
                             "reflected_temp_c": reflected_temp,
                             "humidity_source": "assumed (not measured during acquisition)"},
