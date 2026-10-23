@@ -1,6 +1,6 @@
 %YAML:1.0
 ---
-# Intrinseci FLIR Vue Pro R 336 (lente 8mm) - calibrazione MATLAB
+# Intrinseci FLIR Vue Pro R 336 (lente 9mm) - calibrazione MATLAB
 # Aggiornato: 02/08/2026
 # 28 immagini, Overall Mean Reprojection Error: 0.1395 px
 # Modello: SENZA skew (scelta definitiva, coerente con la ZED).
