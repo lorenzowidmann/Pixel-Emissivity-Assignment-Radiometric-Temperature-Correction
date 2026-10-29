@@ -19,7 +19,7 @@ close all
 clc
 
 %% 1. Parameters
-plyPath = 'C:\path\to\data\AcquistionGroundTruth\Zed\20260911_105024\fullrate\voxel_map\thermal_voxels.ply';
+plyPath = 'C:\Users\loren\Desktop\PaperEmissivityCorrection\RawSignalResult\runs\A1\voxel_map_neutral\thermal_voxels.ply';
 
 % Voxel downsampling: averages points inside voxelSize cubes. Reduces
 % density uniformly in space. Off by default -- the cloud is already one
