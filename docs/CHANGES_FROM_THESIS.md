@@ -189,3 +189,17 @@ Reported, **not fixed**.
 11. **§IV-D (VLM)** is still a placeholder in the paper. The review CSV is not
     consumed by any later step, so the paper's numbers do not include a VLM pass.
 12. A9 RTD: 22.9 °C (paper, `offset_report.json`) vs 22.95 °C (thesis notes).
+13. **FLIR input: neutral raw-signal apparent temperature (changed after v1).**
+    The rot180 `.npy` were produced with flyr's `.celsius`. That applies the
+    camera-stored ε = 0.98 and 50 m object distance, so the camera-side
+    correction was applied before the pipeline's own ε/τ/T_refl.
+    `rotate_flir_poses.py --npy` and `ThermalData.read_temperature` now use
+    `adjust_metadata(emissivity=1.0, object_distance=0.0)` (0.6–0.9 °C lower).
+    `correct_session.py` refuses non-neutral input (`flir_input_guard.py`;
+    `--allow-stored-settings` bypasses it). Effect on the three sessions:
+    - bias 4.6 / 4.9 / 4.8 → 4.1 / 4.3 / 4.2 °C;
+    - frame value at the RTD −0.16 / −0.16 / −0.18 °C;
+    - voxels −0.1 to −0.3 °C.
+
+    The numbers in the READMEs and in paper v1 are from the previous input. See
+    `RawSignalResult\REPORT_raw_signal_vs_stored_settings.md`.

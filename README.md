@@ -393,6 +393,12 @@ their defaults above) are TODO: verify. **Classification benchmark (§IV-B)**: s
   while `correct_session.py` defaults it to `material_map`. Pass both explicitly.
 - FLIR frames must be **rotated 180°** (`rotate_flir_poses.py --npy`). The
   extrinsic was estimated on rotated images.
+- The FLIR `.npy` are the **neutral raw-signal apparent temperature** (flyr with
+  emissivity 1, object distance 0, not the settings stored in the JPEG).
+  `rotate_flir_poses.py --npy` writes them that way; it refuses an existing
+  output folder unless `--overwrite` is passed. `correct_session.py` checks this
+  against the original JPEGs (`--flir-jpg-dir`) and stops otherwise
+  (`--allow-stored-settings` to bypass). See `radiometric_correction/README.md`.
 - `sam/classify_session_sam.py --help` and `project_to_flir.py --help` still name the
   old default calibration path (`../Calibration/…`). The code actually uses
   `sensor_fusion/rig_calibration.yaml`.
@@ -413,6 +419,9 @@ their defaults above) are TODO: verify. **Classification benchmark (§IV-B)**: s
 ---
 
 ## Results (from the paper)
+
+> Obtained with the previous stored-settings FLIR input (see "Known differences"
+> below). Not yet updated for the neutral input.
 
 | | Painted metal door (A1) | Glass window (A9) | Bare aluminium plate (A10) |
 |---|---|---|---|
@@ -452,9 +461,14 @@ These are reported, not fixed (see `docs/CHANGES_FROM_THESIS.md`):
   default (`--radiance-model planck`). flyr subtracts O, while the paper's Eq. 3
   writes "+O". The change against the earlier T⁴ form is ≤ 0.0013 K on the
   session means (0.16 K at ε = 0.25).
-- **FLIR-side settings.** The FLIR JPEGs store ε = 0.98 and a 50 m object
-  distance, so the apparent temperature from flyr already includes a camera-side
-  correction (about 0.6–0.7 K). See `radiometric_correction/README.md`.
+- **FLIR-side settings.** Resolved in the code: the FLIR JPEGs store ε = 0.98
+  and a 50 m object distance, and the input is now the neutral reading
+  (ε = 1, d = 0, 0.6–0.9 K lower), enforced by a guard in `correct_session.py`.
+  The results table above and the bias values were obtained with the
+  **previous stored-settings input**. With the neutral input the biases are
+  4.1 / 4.3 / 4.2 °C and the final temperatures move by −0.1 to −0.3 °C (see
+  `RawSignalResult\REPORT_raw_signal_vs_stored_settings.md`, next to the data,
+  and `docs/CHANGES_FROM_THESIS.md` §5 item 13).
 - Smaller ones are listed in [`docs/CHANGES_FROM_THESIS.md` §5](docs/CHANGES_FROM_THESIS.md):
   the FLIR frame count of the aluminium session (paper 44, data 117), the lens
   (9 vs 8 mm), the nominal FOV, the bias method wording, FLIR distortion

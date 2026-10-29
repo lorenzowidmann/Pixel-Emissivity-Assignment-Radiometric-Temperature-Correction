@@ -36,8 +36,9 @@ rotated images. Originals are never touched. Output goes to a sibling folder
 |---|---|
 | `--poses-root DIR` / `--pose-dir DIR` | many `pose_XX/` folders, or a single folder (mutually exclusive) |
 | `--suffix` | output folder suffix, default `_rot180` |
-| `--npy` | also write `<name>.npy`: the apparent-temperature map in °C (read with `flyr`), rotated |
+| `--npy` | also write `<name>.npy`: the apparent-temperature map in °C (read with `flyr`, neutral settings: emissivity 1, object distance 0), rotated |
 | `--dry-run` | show, write nothing |
+| `--overwrite` | allow writing into an existing output folder (refused otherwise) |
 
 The rotated JPEG loses the embedded radiometric EXIF block (OpenCV does not keep
 it). That is fine for LVT2Calib, which only uses the palette image. **For the

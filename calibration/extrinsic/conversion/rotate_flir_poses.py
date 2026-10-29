@@ -18,10 +18,13 @@ array 180 degrees and saves it as <name>.npy next to the rotated JPEG. This
 is the "*_rot180/*.npy" convention expected by
 RadiometricCalibration/correct_session.py (--flir-dir), SensorFusionLoader's
 rig_calibration.yaml (flir.rotated_180_before_calibration) and
-MATLAB_SensorFusionValidation/FlirLidarZedViewer.m.
+MATLAB_SensorFusionValidation/FlirLidarZedViewer.m. The map is read with
+neutral camera settings (emissivity 1, object distance 0), not the ones
+stored in the JPEG, because correct_session.py applies its own.
 
 Originals are never touched: output goes to a sibling folder
-"<pose>_rot180" (rotated frames, same file names).
+"<pose>_rot180" (rotated frames, same file names). An existing output
+folder is never written into unless --overwrite is passed.
 
 Usage:
     py rotate_flir_poses.py --poses-root C:\\...\\NewCalibration\\Flir\\Poses
@@ -61,6 +64,7 @@ def rotate_pose_dir(pose_dir: Path, suffix: str, dry_run: bool, save_npy: bool) 
             import flyr
         except ImportError:
             sys.exit("--npy requires the 'flyr' package:  py -m pip install flyr")
+        print("  .npy: neutral settings: emissivity=1, object_distance=0")
 
     out_dir.mkdir(parents=True, exist_ok=True)
     n_ok = 0
@@ -73,7 +77,9 @@ def rotate_pose_dir(pose_dir: Path, suffix: str, dry_run: bool, save_npy: bool) 
         cv2.imwrite(str(out_dir / f.name), rotated)
 
         if save_npy:
-            temp = flyr.unpack(str(f)).celsius
+            # Same reading as ThermalData.neutral_celsius: the camera-stored
+            # emissivity (0.98) and distance (50 m) are NOT applied here.
+            temp = flyr.unpack(str(f)).adjust_metadata(emissivity=1.0, object_distance=0.0).celsius
             temp_rot = np.rot90(temp, 2)
             # float32 ('<f4'): flyr returns float64, but the *_rot180/*.npy
             # convention is float32 -- MATLAB_SensorFusionValidation's minimal
@@ -96,7 +102,10 @@ def main():
                     help="Show what would be done without writing anything.")
     p.add_argument("--npy", action="store_true",
                     help="Also save each frame's rotated apparent-temperature map "
-                         "(deg C, via flyr) as <name>.npy next to the rotated JPEG.")
+                         "(deg C, via flyr, neutral settings: emissivity 1, distance 0) "
+                         "as <name>.npy next to the rotated JPEG.")
+    p.add_argument("--overwrite", action="store_true",
+                    help="Allow writing into an existing output folder (refused otherwise).")
     args = p.parse_args()
 
     if args.pose_dir:
@@ -104,6 +113,13 @@ def main():
     else:
         root = Path(args.poses_root)
         pose_dirs = sorted(d for d in root.iterdir() if d.is_dir() and not d.name.endswith(args.suffix))
+
+    # Checked for every pose before writing anything, so a multi-pose run never stops half-way.
+    existing = [pd.parent / (pd.name + args.suffix) for pd in pose_dirs
+                if (pd.parent / (pd.name + args.suffix)).exists()]
+    if existing and not args.dry_run and not args.overwrite:
+        sys.exit("Output folder(s) already exist, refusing to overwrite (pass --overwrite):\n  "
+                 + "\n  ".join(str(d) for d in existing))
 
     total = 0
     for pd in pose_dirs:

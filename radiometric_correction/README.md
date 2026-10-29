@@ -28,20 +28,35 @@ max per-pixel |Δ| 0.03 K, sensor offsets and RTD residuals within 0.001 K, no
 material decision changed. The difference grows at low ε: +0.16 K at ε = 0.25
 (radiometric term +18.24 → +18.40 °C).
 
-> ⚠️ **FLIR-side correction in the apparent temperature.** The FLIR metadata of
-> these sessions has emissivity 0.98, object distance 50 m, reflected −27 °C,
-> atmosphere 28 °C, RH 45 %, so flyr's `.celsius` (and the rot180 `.npy`) is
-> already corrected by the camera for those settings: it is about 0.6–0.7 K above
-> the black-body apparent temperature. Not changed. A possible fix is
+> ⚠️ **FLIR input = neutral raw-signal apparent temperature.** The FLIR metadata of
+> these sessions stores emissivity 0.98, object distance 50 m, reflected −27 °C,
+> atmosphere 28 °C, RH 45 %. flyr's plain `.celsius` applies them, so it is
+> 0.6–0.9 K above the neutral reading. The pipeline applies its own ε, τ and
+> T_refl, so the rot180 `.npy` must be
 > `flyr.unpack(p).adjust_metadata(emissivity=1.0, object_distance=0.0).celsius`
-> when the `.npy` are produced (this would also shift the sensor offset).
+> (`ThermalData.neutral_celsius`). Regenerate them with
+> `../calibration/extrinsic/conversion/rotate_flir_poses.py --pose-dir <originals> --npy`
+> (it refuses to write into an existing folder unless `--overwrite` is passed).
+> **Guard:** `correct_session.py` recomputes the neutral reading for the first,
+> middle and last frame from `--flir-jpg-dir`. It stops if any `.npy` differs by
+> more than 0.01 °C. `--allow-stored-settings` bypasses this with a warning.
+> Without `--flir-jpg-dir` it only warns that the input cannot be verified.
+> Standalone check: `flir_input_guard.py --flir-dir <rot180> --flir-jpg-dir <originals>`.
+>
+> The offset table below and the results in the top-level README were obtained
+> with the **previous stored-settings input**. The neutral input changes the
+> biases to 4.1 / 4.3 / 4.2 °C and the final temperatures by −0.1 to −0.3 °C. See
+> `RawSignalResult\REPORT_raw_signal_vs_stored_settings.md` (outside the repo, next
+> to the data).
 
 | File | What |
 |---|---|
 | `correct_session.py` | Batch correction of a synced session, with a physical-plausibility retry: if a segment's material gives temperatures outside `[--t-min, --t-max]`, the next CLIP candidate is tried. A segment where no candidate is plausible becomes NaN. |
 | `estimate_offset.py` | ΔT_bias from a surface at air temperature: the `--percentile` (10) of corrected pixels of interior wall/ceiling/column regions (ADE class), or of a hand-picked patch (`--interactive`). `--apply` writes the debiased maps. |
 | `main.py` | Single-frame CLI (map or scalar mode) on the same `radiometric/` code. Utility, not part of the paper pipeline. |
-| `ThermalData.py` | Reads apparent temperature from FLIR `*_R.jpg` with `flyr` (stats, single frame, hover viewer, `--out` .npy/.csv). Utility. |
+| `ThermalData.py` | Reads apparent temperature from FLIR `*_R.jpg` with `flyr` (stats, single frame, hover viewer, `--out` .npy/.csv). Neutral settings by default (`neutral_celsius`); `read_temperature(p, stored_settings=True)` gives the old `.celsius`. Utility. |
+| `flir_input_guard.py` | Checks that a rot180 `.npy` folder holds the neutral apparent temperature (first/middle/last frame against the original JPEG, 0.01 °C). Used by `correct_session.py`; also runs standalone. |
+| `tests/` | `test_radiance.py` (Planck model), `test_flir_input_guard.py` (guard, fake reader). `py -m pytest tests -q` |
 | `radiometric/` | Package: `atmosphere.py` (ω, τ), `radiance.py` (S↔T), `correction.py` (`correct_temperature`, Eq. 2 + inverse), `io_maps.py` (map I/O, default table `../emissivity/emissivity_table.csv`), `sensors.py` (unused hardware stubs). |
 | [`matlab/`](matlab) | Figures and the before/after voxel table. |
 
@@ -52,10 +67,10 @@ material decision changed. The difference grows at low ε: +0.16 K at ε = 0.25
 - **`<session>/emissivity_map/<stem>/`**: a fixed name, no flag (`distance.npy`, `segment_id.npy`);
 - `--material-map-dir/<stem>/segments.json` (default `<session>/material_map`;
   the paper used `material_map_consensus`);
-- `--flir-dir`: rot180 `<stem>.npy` apparent temperature (°C);
+- `--flir-dir`: rot180 `<stem>.npy` neutral apparent temperature (°C, ε = 1, d = 0);
 - `--flir-jpg-dir DIR [DIR ...]`: folders with the original full FLIR `*_R.jpg`
-  (Planck constants). Required with `planck`; the run stops before writing if any
-  frame has no original.
+  (Planck constants, and the input guard). Required with `planck`; the run stops
+  before writing if any frame has no original, or if the `.npy` are not neutral.
 
 **Outputs**, in `emissivity_map/<stem>/`:
 - `--out-name` (default `corrected_temperature.npy`);
@@ -70,6 +85,7 @@ material decision changed. The difference grows at low ε: +0.16 K at ε = 0.25
 | `--reflected-temp` | = air temperature |
 | `--radiance-model` | `planck` (`t4` = Stefan–Boltzmann) |
 | `--flir-jpg-dir` | required with `planck` |
+| `--allow-stored-settings` | off: the run stops if the `.npy` are not neutral |
 | `--table` | `../emissivity/emissivity_table.csv` |
 | `--t-min` / `--t-max` | −20 / 80 °C |
 | `--min-plausible-frac` | 0.99 |
@@ -109,7 +125,8 @@ material decision changed. The difference grows at low ε: +0.16 K at ε = 0.25
      --corrected-name corrected_temperature.npy --apply --debiased-name corrected_temperature_debiased.npy
 ```
 
-Paper sessions, read from their `offset_report.json`:
+Paper sessions, read from their `offset_report.json` (previous stored-settings
+input; neutral input: 4.104 / 4.260 / 4.201 °C, see the note at the top):
 
 | Session | Method | T_air | Offset | RTD | Residual |
 |---|---|---|---|---|---|

@@ -3,7 +3,8 @@
 The thermal camera (USB mass-storage / Linux gadget device) drops one
 radiometric `*_R.jpg` per second into a session folder while running. This
 reads those files back with `flyr` and returns the embedded per-pixel
-temperature map (deg C) -- no radiometric correction applied here, that's
+temperature map (deg C), read with neutral camera settings (emissivity 1,
+distance 0) -- no radiometric correction applied here, that's
 `main.py`'s job once a map from here is fed into it as `--thermal`.
 
 Usage:
@@ -30,9 +31,25 @@ def list_session_frames(folder: str | Path) -> list[Path]:
     return frames
 
 
-def read_temperature(path: str | Path) -> np.ndarray:
-    """Apparent temperature map (deg C, 2-D float array) from one radiometric JPEG."""
-    return flyr.unpack(str(path)).celsius
+def neutral_celsius(path: str | Path) -> np.ndarray:
+    """Apparent temperature (deg C) with neutral camera settings: emissivity 1, distance 0.
+
+    The JPEGs store emissivity 0.98 and a 50 m object distance, and flyr's plain
+    `.celsius` applies them. The pipeline applies its own emissivity and
+    transmittance, so it needs the raw-signal reading instead.
+    """
+    return flyr.unpack(str(path)).adjust_metadata(emissivity=1.0, object_distance=0.0).celsius
+
+
+def read_temperature(path: str | Path, stored_settings: bool = False) -> np.ndarray:
+    """Apparent temperature map (deg C, 2-D float array) from one radiometric JPEG.
+
+    Neutral settings by default (see neutral_celsius); stored_settings=True gives
+    flyr's `.celsius` with the camera-stored emissivity/distance (old behaviour).
+    """
+    if stored_settings:
+        return flyr.unpack(str(path)).celsius
+    return neutral_celsius(path)
 
 
 def read_session(folder: str | Path) -> list[np.ndarray]:

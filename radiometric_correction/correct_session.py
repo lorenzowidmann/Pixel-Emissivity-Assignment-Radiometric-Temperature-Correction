@@ -37,6 +37,7 @@ import numpy as np
 from radiometric import (PlanckRadianceModel, StefanBoltzmannModel, correct_temperature,
                          transmittance)
 from radiometric.radiance import PLANCK_KEYS
+from flir_input_guard import verify_or_exit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "emissivity"))
 from emissivity_table import EmissivityTable  # noqa: E402
@@ -63,6 +64,9 @@ def parse_args():
     p.add_argument("--flir-jpg-dir", nargs="+", default=None, metavar="DIR",
                     help="Folder(s) with the ORIGINAL full FLIR *_R.jpg (with metadata). "
                          "Not the stripped rot180 copies.")
+    p.add_argument("--allow-stored-settings", action="store_true",
+                    help="Run even if the --flir-dir .npy were not produced with neutral "
+                         "settings (emissivity 1, distance 0). Not for paper runs.")
     p.add_argument("--material-map-dir", default=None, metavar="DIR",
                     help="Where the per-frame segments.json live (default: "
                          "<session-dir>/material_map). Point this at the output of "
@@ -153,6 +157,15 @@ def main():
             sys.exit(f"No original FLIR JPEG for {len(no_original)} frame(s) in "
                      f"{args.flir_jpg_dir}: {', '.join(no_original)}")
     ref_constants = None
+
+    # The .npy must hold the neutral (emissivity 1, distance 0) apparent temperature,
+    # since the correction below applies our own emissivity and transmittance.
+    if args.flir_jpg_dir:
+        verify_or_exit(flir_dir, [Path(tr["flir"]["file"]).stem for tr in triplets],
+                       args.flir_jpg_dir, args.allow_stored_settings)
+    else:
+        print("WARNING: no --flir-jpg-dir, so the FLIR input convention cannot be verified "
+              "(the .npy must be neutral: emissivity=1, distance=0)", file=sys.stderr)
 
     print(f"Correcting up to {len(triplets)} frame(s)")
     print(f"Radiance model: {args.radiance_model}")
