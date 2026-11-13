@@ -111,7 +111,8 @@ emissivity/                  shared by both methods: emissivity_table.csv (+ emi
   ground_truth/              annotate.py, evaluate.py, ground_truth_*.csv, eval_frames.txt
 radiometric_correction/      correct_session.py, estimate_offset.py, main.py, ThermalData.py, radiometric/
   matlab/                    ShowTemperatureCorrection.m, VoxelCorrectionTable.m, ViewThermalPLY.m
-UncertaintyAnalysis/         uncertainty_mc.py: Monte Carlo (GUM S1) uncertainty of T_corr at the RTD pixel
+UncertaintyAnalysis/         uncertainty_mc.py (Monte Carlo u of T_corr at the RTD pixel), uncertainty_map.py,
+                             voxel_uncertainty.py, uncertainty_report.py (per-pixel/voxel u(T), eps distribution)
 docs/                        CHANGES_FROM_THESIS.md (provenance and edit log)
 ```
 
