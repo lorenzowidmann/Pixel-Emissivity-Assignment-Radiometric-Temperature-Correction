@@ -1,0 +1,4 @@
+# UncertaintyAnalysis/ (light env). Imports scanned by hand.
+# uncertainty_mc.py also imports ../radiometric_correction/radiometric (numpy only;
+# flyr is imported there lazily and is not needed here). Pin as in radiometric_correction/requirements.txt.
+numpy==2.5.1

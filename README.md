@@ -111,6 +111,7 @@ emissivity/                  shared by both methods: emissivity_table.csv (+ emi
   ground_truth/              annotate.py, evaluate.py, ground_truth_*.csv, eval_frames.txt
 radiometric_correction/      correct_session.py, estimate_offset.py, main.py, ThermalData.py, radiometric/
   matlab/                    ShowTemperatureCorrection.m, VoxelCorrectionTable.m, ViewThermalPLY.m
+UncertaintyAnalysis/         uncertainty_mc.py: Monte Carlo (GUM S1) uncertainty of T_corr at the RTD pixel
 docs/                        CHANGES_FROM_THESIS.md (provenance and edit log)
 ```
 
@@ -127,7 +128,7 @@ light one runs everything that only reads bags, `.npy` maps and JSON.
 | Env | File | Used by |
 |---|---|---|
 | **heavy** (`C:\venvs\emissivity` in the original setup) | `requirements-heavy.txt` | `emissivity/mask2former/`, `emissivity/sam/`, `external_vlm/` |
-| **light** (`C:\venvs\sensorfusion`) | `requirements-light.txt` | `synchronization/`, `sensor_fusion/`, `project_to_flir.py`, `voxel_consensus.py`, `prepare_voxel_comparison.py`, `radiometric_correction/`, `ground_truth/`, `calibration/extrinsic/` |
+| **light** (`C:\venvs\sensorfusion`) | `requirements-light.txt` | `synchronization/`, `sensor_fusion/`, `project_to_flir.py`, `voxel_consensus.py`, `prepare_voxel_comparison.py`, `radiometric_correction/`, `ground_truth/`, `calibration/extrinsic/`, `UncertaintyAnalysis/` |
 | **VLM** (add to heavy or light) | `emissivity/mask2former/external_vlm/requirements.txt` | `review_low_confidence.py` |
 | **rover** (Ubuntu, onboard NUC) | `acquisition/requirements-rover.txt`, `calibration/intrinsic/requirements-rover.txt` | `zed_record.py`, `capture_zed_right.py` |
 | optional, Python **3.12** | see `calibration/extrinsic/requirements.txt` | `record_check/lidar_hole_check.py` (open3d 0.19.0 has no 3.13 wheel) |
